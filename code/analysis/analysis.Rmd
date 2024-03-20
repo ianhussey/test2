@@ -1,0 +1,75 @@
+---
+title: "Error checking Palhano-Fontes et al. (2018) 'Rapid antidepressant effects of the psychedelic ayahuasca in treatment-resistant depression: a randomized placebo-controlled trial'"
+author: "Ian Hussey & Lars Ulrich"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+# Summary 
+
+The abstract reports the result for the secondary outcome variable (MADRS) but not the primary outcome variable (HAM-D). The primary and secondary variables are defined clearly in both the article body and the trial registration.
+
+Several of the key results reported in the abstract and results cannot be computationally reproduced from the manuscript's data. These are summarized in the figure below.
+
+The pattern of non-reproducible results necessarily implies that one of the following is the case. Either:
+
+(a) the individual participant data reported in the supplementary materials contains errors, or 
+(b) the individual participant data reported in the supplementary materials are correct, and the reported results therefore contain errors that substantively affect the article's conclusions, or 
+(c) both the data and the results contain errors.
+
+# Data sources
+
+- Individual participant data was reported in supplementary materials figure S1. We extracted those numbers into data.xlsx, which is loaded here.
+- Summary statistics for each condition, measure and time-point were reported in both Table 1 and the supplementary materials Tables S3 and S4. They agree between those two sources. We extracted those numbers into data.xlsx, which is loaded here.
+- Mean scores for each condition, measure and time-point were also reported in Figures 2 and 3. We extracted those numbers into hamd_from_plot.csv and madrs_from_plot.csv, using WebPlotDigitizer, which are loaded here.
+- Between-subjects Cohen's d effect sizes and their 95% Confidence Intervals were reported in the article's abstract (p 1) and results (p 4) and supplementary materials Tables S3 and S4. They agree between those three sources. We extracted those numbers into data.xlsx, which is loaded here.
+
+```{r}
+
+# dependencies
+library(tidyverse)
+library(readxl)
+library(effsize)
+library(janitor)
+library(knitr)
+library(kableExtra)
+
+# extracted from the supplementary materials figure S1
+data_scores <- read_excel("../../data/processed/data.xlsx", sheet = "data") 
+
+```
+
+# Recalculate between-groups Cohen's *d*s from individual participant data
+
+```{r}
+
+# cohen's d from data function
+tidy_cohens_d_from_data <- function(data){
+  require(effsize)
+  fit <- effsize::cohen.d(score ~ condition, data = data)
+  res <- data.frame(d_recalc_data = fit$estimate,
+                    d_recalc_data_ci_lower = fit$conf.int[1],
+                    d_recalc_data_ci_upper = fit$conf.int[2])
+  return(res)
+}
+
+# recalculate and compare
+data_between_from_data <- data_scores |>
+  select(condition, HAMD_d7, MADRS_d1, MADRS_d2, MADRS_d7) |>
+  pivot_longer(cols = c("HAMD_d7", "MADRS_d1", "MADRS_d2", "MADRS_d7"),
+               names_to = c("measure", "timepoint"),
+               names_sep = "_",
+               values_to = "score") |>
+  group_by(measure, timepoint) %>%
+  do(tidy_cohens_d_from_data(.))
+
+data_between_from_data
+```
+
+
