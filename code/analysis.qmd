@@ -1,44 +1,137 @@
 ---
-title: "analysis"
-author: "author goes here"
-date: today
-editor: source
-format:
-  html:
-    theme:
-      light: flatly
-      dark: darkly
-    toc: true
-    toc-location: right
-    toc-depth: 3
-    number-sections: true
-    code-fold: show
-    code-tools: true
-    code-copy: true
-    code-link: true
-    code-overflow: wrap
-    df-print: paged
-    embed-resources: true
-    fig-width: 7
-    fig-height: 5
-execute:
-  message: false
-  warning: false
+title: "Get started with psychdsish"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get started with psychdsish}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r}
-#| label: setup
-#| include: false
-# Turn off scientific notation globally
-options(scipen = 999)
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(psychdsish)
 ```
 
-# Dependencies
-```{r}
-# packages and setup here
+`psychdsish` helps you set up and check research projects that follow a
+standardised, reproducibility-friendly layout. The layout is loosely inspired
+by the [psych-DS](https://psych-ds.github.io/) data standard, but is
+deliberately *not* fully psych-DS compliant -- most notably it drops the JSON
+metadata requirement. Hence *psych-DS-ish*.
+
+There are three things you will usually do:
+
+1. **Create** a project skeleton with `create_project_skeleton()`.
+2. **Validate** an existing project against the conventions with `validator()`.
+3. (rarely, and mainly for testing) **Delete** a skeleton with
+   `delete_project_skeleton()`.
+
+## Creating a project skeleton
+
+`create_project_skeleton()` writes an opinionated directory tree together with a
+`README`, a licence, a `.gitignore` with sensible defaults, and Quarto
+templates for processing and analysis code.
+
+If you know the path to your project you can call it directly from the console:
+
+```{r, eval = FALSE}
+create_project_skeleton(project_root = "~/git/my_project")
 ```
 
-# Session info
+There is no default `project_root`, so files are only written where you say.
+From the `tools/project_creator.qmd` file that the skeleton creates, use
+`project_root = "../"` to write to the project root one level up.
+
+Here is a complete, self-contained round-trip inside a temporary directory:
+
 ```{r}
-sessionInfo()
+project <- file.path(tempdir(), "demo_project")
+
+create_project_skeleton(project_root = project, overwrite = TRUE)
+
+# the top-level layout that was created
+list.dirs(project, recursive = FALSE, full.names = FALSE)
 ```
+
+The skeleton separates raw data, processed data, analysis code, outputs, and
+documentation:
+
+```text
+my_project/
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+├── README.md
+├── code/
+│   ├── analysis.qmd
+│   └── processing.qmd
+├── data/
+│   ├── outputs/
+│   │   ├── fitted_models/
+│   │   ├── plots/
+│   │   └── results/
+│   ├── processed/
+│   └── raw/
+├── methods/
+├── preregistration/
+└── reports/
+```
+
+## Validating a project
+
+`validator()` checks a project against the psych-DS-ish conventions and returns
+a table of tests, each marked `PASS`, `FAIL`, or `SKIP` (the check could not be
+run), with guidance on how to fix any failures. A freshly created skeleton fails
+only one test, as a reminder to replace the template text in its `README.md`.
+Four tests are skipped: the raw data check, because the project is not yet a git
+repository; the rendered `.html` check, because nothing has been rendered; and
+the two codebook checks, because there is no processed data yet:
+
+```{r}
+res <- validator(project_root = project)
+res
+```
+
+The rules cover, among other things, which directories must exist, where each
+file type is allowed to live (for example, data files under `data/`, scripts
+under `code/` or `tools/`), that filenames contain no spaces, that raw data have
+not changed since they were first committed to git, that rendered `.html` files
+are up to date, that code contains no `setwd()` calls or absolute paths, and
+that every processed data file has a completed codebook. See
+`?validator` for the full set of rules.
+
+To fail a continuous integration job (e.g., GitHub Actions) when any check
+fails, use `validator(strict = TRUE)`.
+
+## Deleting a skeleton
+
+`delete_project_skeleton()` exists mainly for testing. It is deliberately
+cautious: by default it requires interactive confirmation and the presence of a
+"sentinel" file (such as `.gitignore`) so that you cannot point it at an
+arbitrary directory by accident. Always preview with `dry_run = TRUE` first.
+
+```{r}
+# preview only -- nothing is removed
+invisible(delete_project_skeleton(project_root = project, confirm = FALSE, dry_run = TRUE))
+
+# actually remove the demo project (non-interactive)
+delete_project_skeleton(project_root = project, confirm = FALSE)
+
+dir.exists(project)
+```
+
+```{r, include = FALSE}
+# remove the protected file left behind so the vignette leaves no files in tempdir()
+unlink(project, recursive = TRUE)
+```
+
+## Where to go next
+
+- `?create_project_skeleton` for every directory and template that is created.
+- `?validator` for the complete list of validation rules.
+- The package also ships small helpers for tidying code style
+  (`style_all_files()`, `poorly_styled_code()`) and for spotting unused
+  dependencies and objects (`check_unused_dependencies()`,
+  `check_unused_objects()`).
