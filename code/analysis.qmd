@@ -1,6 +1,6 @@
 ---
 title: "analysis"
-author: "author goes here"
+author: "ian hussey"
 date: today
 editor: source
 format:
