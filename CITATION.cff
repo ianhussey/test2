@@ -1,0 +1,19 @@
+# Citation metadata for this project, in Citation File Format (CFF).
+# On GitHub, this file adds a 'Cite this repository' button to the
+# repository page, which gives APA and BibTeX citations. Zenodo also
+# reads it when archiving a GitHub release.
+#
+# To customise: replace the placeholder values below, add one
+# '- family-names:' block per author, and uncomment 'doi' once you have
+# one. Documentation: https://citation-file-format.github.io
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+title: "title goes here"
+authors:
+  - family-names: "family name goes here"
+    given-names: "given name goes here"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+date-released: "2026-10-19"
+license: CC-BY-4.0
+repository-code: "https://github.com/username/repository"
+# doi: 10.5281/zenodo.0000000

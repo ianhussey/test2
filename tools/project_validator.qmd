@@ -1,0 +1,40 @@
+---
+title: "Check repository compliance against psych-ds-ish standard"
+author: "author goes here"
+date: today
+editor: source
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    code-link: true
+    code-overflow: wrap
+    df-print: paged
+    embed-resources: true
+    fig-width: 7
+    fig-height: 5
+execute:
+  message: false
+  warning: false
+---
+
+```{r}
+
+library(psychdsish)
+library(knitr)
+library(kableExtra)
+
+results <- validator("../")
+
+results |>
+  knitr::kable() |>
+  kableExtra::kable_classic(full_width = FALSE)
+```
